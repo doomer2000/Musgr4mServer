@@ -26,19 +26,18 @@ namespace MServer.Services
         private HttpListenerRequest request;
         private HttpListenerResponse response;
 
-        public Server()
+        private readonly string ip;
+        private readonly string port;
+
+        public Server(string ip,string port)
         {
+            this.ip = ip;
+            this.port = port;
             Console.OutputEncoding = Encoding.UTF8;
             dbcontext = new Wheel_Context();
             userManipulationService = new UserManipulationService(dbcontext);
             userService = new UserService(dbcontext);
             server = new HttpListener();
-            //foreach (User U in userService.GetUsers())
-            //{
-            //    Console.WriteLine(U.Login);
-            //}
-            User u = new User() { Login = "g123", Password = "g12345", LastTimeOnline = DateTime.Now };
-            userManipulationService.Registration(u);
             ServerConfiguration();
             start();
         }
@@ -46,9 +45,9 @@ namespace MServer.Services
 
         private void ServerConfiguration()
         {
-            server.Prefixes.Add("http://10.2.25.31:27001/GetProfile/");
-            server.Prefixes.Add("http://10.2.25.31:27001/GetPlaylist/");
-            server.Prefixes.Add("http://10.2.25.31:27001/Registration/");
+            server.Prefixes.Add($"http://{ip}:{port}/GetProfile/");
+            server.Prefixes.Add($"http://{ip}:{port}/GetPlaylist/");
+            server.Prefixes.Add($"http://{ip}:{port}/Registration/");
         }
 
 
@@ -68,23 +67,23 @@ namespace MServer.Services
                 switch (request.HttpMethod)
                 {
                     case "POST":
-                        switch (request.Url.ToString())
+                        switch (request.Url.ToString().Split('/')[4])
                         {
-                            case "http://10.2.25.31:27001/GetProfile/":
+                            case "/GetProfile/":
                                 Task.Run(() => GetMyProfile());
                                 break;
-                            case "http://10.2.25.31:27001/GetPlaylist/":
+                            case "/GetPlaylist/":
                                 GetPlaylist();
                                 break;
-                            case "http://10.2.25.31:27001/Registration/":
+                            case "/Registration/":
                                 Registration();
                                 break;
                         }
                         break;
                     case "GET":
-                        Console.WriteLine("GET");
                         if (request.RawUrl.Contains("/GetProfile/"))
                         {
+                            Console.WriteLine("/GetProfile/");
                             string login = request.RawUrl.Split('&')[1];
                             string password = request.RawUrl.Split('&')[2];
                             //using (Stream stream = request.InputStream)
@@ -95,12 +94,12 @@ namespace MServer.Services
                             //        Console.WriteLine(data);
                             //    }
                             //}
-                            Console.WriteLine("DataGetted");
                             using (Stream stream = response.OutputStream)
                             {
                                 User user = userService.GetUser(login, password);
                                 if (user != null)
                                 {
+                                    Console.WriteLine($"{user.Login} loggined");
                                     Console.WriteLine(user.Id.ToString() + ' ' + user.Login);
                                     string jsonObj = JsonConvert.SerializeObject(user);
                                     byte[] buffer = Encoding.UTF8.GetBytes(jsonObj);
