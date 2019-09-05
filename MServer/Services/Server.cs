@@ -64,18 +64,20 @@ namespace MServer.Services
                     GetMyProfile();
                 }
                 response = context.Response;
+                string[] test = request.Url.ToString().Split('/');
                 switch (request.HttpMethod)
                 {
                     case "POST":
-                        switch (request.Url.ToString().Split('/')[4])
+                        switch (request.Url.ToString().Split('/')[3])
                         {
-                            case "/GetProfile/":
+                            case "GetProfile":
                                 Task.Run(() => GetMyProfile());
                                 break;
-                            case "/GetPlaylist/":
+                            case "GetPlaylist":
                                 GetPlaylist();
                                 break;
-                            case "/Registration/":
+                            case "Registration":
+                                Console.WriteLine($"Darova Bandit");
                                 Registration();
                                 break;
                         }
