@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,6 +23,6 @@ namespace MServer.Models
         public virtual ICollection<Music> UserMusic { get; set; }
         public virtual ICollection<Device> Devices { get; set; }
         public virtual ICollection<GeneralChat> GeneralChats { get; set; }
-        public virtual ICollection<User> UserFriends { get; set; }
+        public virtual ICollection<Friend> UserFriends { get; set; }
     }
 }

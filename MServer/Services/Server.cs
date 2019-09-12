@@ -29,6 +29,7 @@ namespace MServer.Services
 
         public Server(string ip, string port)
         {
+            Wheel_Context dbcontext = new Wheel_Context();
             this.ip = ip;
             this.port = port;
             Console.OutputEncoding = Encoding.UTF8;
@@ -46,6 +47,7 @@ namespace MServer.Services
             server.Prefixes.Add($"http://{ip}:{port}/GetPlaylist/");
             server.Prefixes.Add($"http://{ip}:{port}/Registration/");
             server.Prefixes.Add($"http://{ip}:{port}/");
+            server.Prefixes.Add($"http://{ip}:{port}/GetFriends/");
         }
 
 
@@ -94,35 +96,36 @@ namespace MServer.Services
                             }
                         }
                         break;
-                        //case "GET":
-                        //    if (request.RawUrl.Contains("/GetProfile/"))
-                        //    {
-                        //        Console.WriteLine("/GetProfile/");
-                        //        string login = request.RawUrl.Split('&')[1];
-                        //        string password = request.RawUrl.Split('&')[2];
-                        //        //using (Stream stream = request.InputStream)
-                        //        //{
-                        //        //    using (StreamReader reader = new StreamReader(stream))
-                        //        //    {
-                        //        //        string data = reader.ReadToEnd();
-                        //        //        Console.WriteLine(data);
-                        //        //    }
-                        //        //}
-                        //        using (Stream stream = response.OutputStream)
-                        //        {
-                        //            User user = await userService.TryLogin(login, password);
-                        //            if (user != null)
-                        //            {
-                        //                Console.WriteLine("reg :" + user.Id.ToString() + ' ' + user.Login);
-                        //                string jsonObj = JsonConvert.SerializeObject(user);
-                        //                byte[] buffer = Encoding.UTF8.GetBytes(jsonObj);
-                        //                response.ContentLength64 = buffer.Length;
-                        //                stream.Write(buffer, 0, buffer.Length);
-                        //                stream.Close();
-                        //            }
-                        //        }
-                        //    }
-                        //break;
+                        case "GET":
+
+                            //if (request.RawUrl.Contains("/GetProfile/"))
+                            //{
+                            //    Console.WriteLine("/GetProfile/");
+                            //    string login = request.RawUrl.Split('&')[1];
+                            //    string password = request.RawUrl.Split('&')[2];
+                            //    //using (Stream stream = request.InputStream)
+                            //    //{
+                            //    //    using (StreamReader reader = new StreamReader(stream))
+                            //    //    {
+                            //    //        string data = reader.ReadToEnd();
+                            //    //        Console.WriteLine(data);
+                            //    //    }
+                            //    //}
+                            //    using (Stream stream = response.OutputStream)
+                            //    {
+                            //        User user = await userService.TryLogin(login, password);
+                            //        if (user != null)
+                            //        {
+                            //            Console.WriteLine("reg :" + user.Id.ToString() + ' ' + user.Login);
+                            //            string jsonObj = JsonConvert.SerializeObject(user);
+                            //            byte[] buffer = Encoding.UTF8.GetBytes(jsonObj);
+                            //            response.ContentLength64 = buffer.Length;
+                            //            stream.Write(buffer, 0, buffer.Length);
+                            //            stream.Close();
+                            //        }
+                            //    }
+                            //}
+                        break;
                 }
 
 
@@ -179,18 +182,17 @@ namespace MServer.Services
                     if (exist != null)
                     {
                         Device device = new Device() { User = exist, IpAdress = deviceIp };
+
                         await userService.AddDevice(device);
                         User user = await userService.TryLogin(login, password);
 
                         using (Stream outstream = response.OutputStream)
                         {
-                            Console.WriteLine("1111");
                             string jsonObj = JsonConvert.SerializeObject(user);
                             byte[] buffer = Encoding.UTF8.GetBytes(jsonObj);
                             response.ContentLength64 = buffer.Length;
                             outstream.Write(buffer, 0, buffer.Length);
                             outstream.Close();
-
                         }
                     }
                     else

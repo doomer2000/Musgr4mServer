@@ -11,12 +11,13 @@ namespace MServer.EF
         public DbSet<ChatMsgs> ChatMsgs { get; set; }
         public DbSet<GeneralChat> GeneralChats { get; set; }
         public DbSet<Device> Devices { get; set; }
+        public DbSet<Friend> Friends { get; set; }
         //public DbSet<GeneralChatUsers> GeneralChatUsers { get; set; }
 
         public Wheel_Context() : base("name=Wooden_Wheel_ConString")
         {
-            Configuration.ProxyCreationEnabled = false;
-            Configuration.ValidateOnSaveEnabled = false;
+            //Configuration.ProxyCreationEnabled = false;
+            //Configuration.ValidateOnSaveEnabled = false;
             Database.SetInitializer<Wheel_Context>(new DropCreateDatabaseIfModelChanges<Wheel_Context>());
             //Database.Create();
         }
