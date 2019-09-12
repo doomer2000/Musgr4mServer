@@ -17,11 +17,10 @@ namespace MServer.Models
         public DateTime LastTimeOnline { get; set; }
         public string SecretAnswer { get; set; }
         public string AvatarPath { get; set; }
-
         
         public virtual SecretQuestion SecretQuestion { get; set; }
         public virtual ICollection<Music> UserMusic { get; set; }
-
+        public virtual ICollection<Device> Devices { get; set; }
         public virtual ICollection<GeneralChat> GeneralChats { get; set; }
         public virtual ICollection<User> UserFriends { get; set; }
     }

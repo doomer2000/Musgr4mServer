@@ -31,6 +31,18 @@ namespace MServer.Repositoies
             return false;
         }
 
+        public async Task<User> GetUserByID(int id)
+        {
+            User user = await context.Users.FindAsync(id);
+            if (user != null)
+            {
+                user.Password = string.Empty;
+                user.MobileNum = string.Empty;
+                return user;
+            }
+            return null;
+        }
+
         public User Registration(User user)
         {
             user = context.Users.Add(user);

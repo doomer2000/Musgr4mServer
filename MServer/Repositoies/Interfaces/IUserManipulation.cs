@@ -11,5 +11,6 @@ namespace MServer.Repositoies.Interfaces
     {
         User Registration(User user);
         bool ChangePassword(User user, string outPassword, string newPassword);
+        Task<User> GetUserByID(int id);
     }
 }

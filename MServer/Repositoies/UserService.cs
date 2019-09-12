@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MServer.Models;
 using MServer.Repositoies.Interfaces;
+using System.Data.Entity;
 
 namespace MServer.Repositoies
 {
@@ -18,11 +19,40 @@ namespace MServer.Repositoies
             this.context = context;
         }
 
-        public User GetUser(string login, string password)
+
+        public async Task<Device> AddDevice(Device device)
         {
-            User user = context.Users.Where(u => login == u.Login && password == u.Password).FirstOrDefault();
+            device = context.Devices.Add(device);
+            await context.SaveChangesAsync();
+            return device;
+        }
+
+        public async void AddDeviceToUser(User user, Device device)
+        {
+            user.Devices.Add(device);
+            await context.SaveChangesAsync();
+        }
+
+        public async Task<User> IsUserExist(string login, string password)
+        {
+            User user = await context.Users.FirstOrDefaultAsync<User>(d => d.Login == login && d.Password == password);
             if (user != null)
             {
+                return user;
+            }
+            return null;
+        }
+
+        public async Task<User> TryLogin(string login, string password)
+        {
+            User user = await context.Users.AsNoTracking().FirstOrDefaultAsync<User>(d => d.Login == login && d.Password == password);
+            if (user != null)
+            {
+                user.Password = string.Empty;
+                user.MobileNum = string.Empty;
+                user.UserMusic = null;
+                user.Devices = null;
+                user.UserFriends = null;
                 return user;
             }
             return null;
