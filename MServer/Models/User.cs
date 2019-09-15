@@ -23,6 +23,8 @@ namespace MServer.Models
         public virtual ICollection<Music> UserMusic { get; set; }
         public virtual ICollection<Device> Devices { get; set; }
         public virtual ICollection<GeneralChat> GeneralChats { get; set; }
+
+        [InverseProperty("_Friend")]
         public virtual ICollection<Friend> UserFriends { get; set; }
     }
 }

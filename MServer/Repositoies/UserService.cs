@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using MServer.Models;
 using MServer.Repositoies.Interfaces;
 using System.Data.Entity;
+using System.Data.SqlClient;
 
 namespace MServer.Repositoies
 {
@@ -45,24 +46,34 @@ namespace MServer.Repositoies
 
         public async Task<User> TryLogin(string login, string password)
         {
-            User user = await context.Users.Include("UserFriends").AsNoTracking().FirstOrDefaultAsync(d => d.Login == login && d.Password == password);
+            User user = await context.Users.AsNoTracking().FirstOrDefaultAsync(d => d.Login == login && d.Password == password);
             if (user != null)
             {
                 user.Password = string.Empty;
                 user.MobileNum = string.Empty;
-                user.UserMusic = null;
-                user.Devices = null;
-                //user.UserFriends = null;
+                user.UserFriends = await GetFriends(user.Id);
                 return user;
             }
             return null;
         }
 
-        //public async Task<ICollection<Friend>> GetFriends(int id)
-        //{
-        //    var a = await context.Friends.Where(f => f.UserFriend.Id == id).FirstOrDefault();
-        //    return a;
-        //}
+        public async Task<ICollection<Friend>> GetFriends(int id)
+        {
+            SqlParameter param = new SqlParameter("@Id", id);
+            ICollection<Friend> friends = await context.Database.SqlQuery<Friend>("SELECT * FROM Friends WHERE Friends.User_Id = @Id", param).ToListAsync();
+            foreach (Friend F in friends)
+            {
+                await context.Users.FindAsync(F._Friend_Id).ContinueWith(
+                    t =>
+                    {
+                        User res = t.Result;
+                        res.Password = string.Empty;
+                        res.MobileNum = string.Empty;
+                        F._Friend = res;
+                    });
+            }
+            return friends;
+        }
 
 
     }

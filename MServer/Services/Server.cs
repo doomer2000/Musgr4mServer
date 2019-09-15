@@ -15,6 +15,9 @@ using MServer.Models;
 using MServer.Repositoies;
 using MServer.Repositoies.Interfaces;
 using System.Text.RegularExpressions;
+using MServer.Models.TestChat;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace MServer.Services
 {
@@ -48,6 +51,7 @@ namespace MServer.Services
             server.Prefixes.Add($"http://{ip}:{port}/Registration/");
             server.Prefixes.Add($"http://{ip}:{port}/");
             server.Prefixes.Add($"http://{ip}:{port}/GetFriends/");
+            server.Prefixes.Add($"http://{ip}:{port}/CreateChat/");
         }
 
 
@@ -71,6 +75,9 @@ namespace MServer.Services
                                     Registration();
                                     break;
                                 case "ChangePassword":
+                                    break;
+                                case "CreateChat":
+                                    CreateChat();
                                     break;
                                 case "TryLogin":
                                     Task.Run(() => TryLogin());
@@ -96,35 +103,35 @@ namespace MServer.Services
                             }
                         }
                         break;
-                        case "GET":
+                    case "GET":
 
-                            //if (request.RawUrl.Contains("/GetProfile/"))
-                            //{
-                            //    Console.WriteLine("/GetProfile/");
-                            //    string login = request.RawUrl.Split('&')[1];
-                            //    string password = request.RawUrl.Split('&')[2];
-                            //    //using (Stream stream = request.InputStream)
-                            //    //{
-                            //    //    using (StreamReader reader = new StreamReader(stream))
-                            //    //    {
-                            //    //        string data = reader.ReadToEnd();
-                            //    //        Console.WriteLine(data);
-                            //    //    }
-                            //    //}
-                            //    using (Stream stream = response.OutputStream)
-                            //    {
-                            //        User user = await userService.TryLogin(login, password);
-                            //        if (user != null)
-                            //        {
-                            //            Console.WriteLine("reg :" + user.Id.ToString() + ' ' + user.Login);
-                            //            string jsonObj = JsonConvert.SerializeObject(user);
-                            //            byte[] buffer = Encoding.UTF8.GetBytes(jsonObj);
-                            //            response.ContentLength64 = buffer.Length;
-                            //            stream.Write(buffer, 0, buffer.Length);
-                            //            stream.Close();
-                            //        }
-                            //    }
-                            //}
+                        //if (request.RawUrl.Contains("/GetProfile/"))
+                        //{
+                        //    Console.WriteLine("/GetProfile/");
+                        //    string login = request.RawUrl.Split('&')[1];
+                        //    string password = request.RawUrl.Split('&')[2];
+                        //    //using (Stream stream = request.InputStream)
+                        //    //{
+                        //    //    using (StreamReader reader = new StreamReader(stream))
+                        //    //    {
+                        //    //        string data = reader.ReadToEnd();
+                        //    //        Console.WriteLine(data);
+                        //    //    }
+                        //    //}
+                        //    using (Stream stream = response.OutputStream)
+                        //    {
+                        //        User user = await userService.TryLogin(login, password);
+                        //        if (user != null)
+                        //        {
+                        //            Console.WriteLine("reg :" + user.Id.ToString() + ' ' + user.Login);
+                        //            string jsonObj = JsonConvert.SerializeObject(user);
+                        //            byte[] buffer = Encoding.UTF8.GetBytes(jsonObj);
+                        //            response.ContentLength64 = buffer.Length;
+                        //            stream.Write(buffer, 0, buffer.Length);
+                        //            stream.Close();
+                        //        }
+                        //    }
+                        //}
                         break;
                 }
 
@@ -132,6 +139,39 @@ namespace MServer.Services
             }
         }
 
+
+        private void CreateChat()
+        {
+            using (Stream stream = request.InputStream)
+            {
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    MyChat mychat = JsonConvert.DeserializeObject<MyChat>(reader.ReadToEnd());
+
+                    Console.WriteLine($"{mychat.User.Login}\n" +
+                        $"{mychat.Chat.Title}\n" +
+                        $"{mychat.Chat.ChatMembers.Count}");
+
+    
+                    using (Stream outstream = response.OutputStream)
+                    {
+                        Bitmap bitmap = new Bitmap(@"C:\Users\qwert\Desktop\1.jpg");
+                        ImageConverter converter = new ImageConverter();
+                        //string jsonObj = JsonConvert.SerializeObject(bitmap);
+                        byte[] buffer = (byte[])converter.ConvertTo(bitmap, typeof(byte[]));
+                        response.ContentLength64 = buffer.Length;
+                        outstream.Write(buffer, 0, buffer.Length);
+                        outstream.Close();
+
+
+                  
+                    }
+
+                    Wheel_Context dbcontext = new Wheel_Context();
+                    IUserService userService = new UserService(dbcontext);
+                }
+            }
+        }
 
         private bool Numcheck(string str)
         {
