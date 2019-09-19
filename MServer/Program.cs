@@ -12,7 +12,7 @@ namespace MServer
         static Server server;
         static void Main(string[] args)
         {
-            server = new Server("192.168.31.48", "27001");
+            server = new Server("192.168.0.110", "27001");
             //server.start();
             //Started
         }

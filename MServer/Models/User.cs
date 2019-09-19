@@ -15,14 +15,12 @@ namespace MServer.Models
         public string Mail { get; set; }
         public string MobileNum { get; set; }
         public bool IsOnline { get; set; }
-        public DateTime LastTimeOnline { get; set; }
-        public string SecretAnswer { get; set; }
+        public string LastTimeOnline { get; set; }
+     
         public string AvatarPath { get; set; }
         
-        public virtual SecretQuestion SecretQuestion { get; set; }
+       
         public virtual ICollection<Music> UserMusic { get; set; }
-        public virtual ICollection<Device> Devices { get; set; }
-        public virtual ICollection<GeneralChat> GeneralChats { get; set; }
 
         [InverseProperty("_Friend")]
         public virtual ICollection<Friend> UserFriends { get; set; }

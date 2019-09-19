@@ -11,7 +11,8 @@ namespace MServer.Repositoies.Interfaces
     {
         Task<User> IsUserExist(string login, string password);
         Task<User> TryLogin(string login, string password);
-        Task<Device> AddDevice(Device device);
-        void AddDeviceToUser(User user, Device device);
+       
+        void SetOnline(int id);
+
     }
 }

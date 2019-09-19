@@ -12,6 +12,10 @@ namespace MServer.Models.TestChat
         public int Id { get; set; }
         public string Text { get; set; }
         public int MessageType { get; set; }
+        //0-text
+        //1-audio
+        //2-image
+        //3-video
         public DateTime SendTime { get; set; }
         //public DateTime ReceiveTime { get; set; }
         //public DateTime ReadTime { get; set; }

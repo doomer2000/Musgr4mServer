@@ -36,7 +36,7 @@ namespace MServer.Repositoies
             User user = await context.Users.FindAsync(id);
             if (user != null)
             {
-                user.Password = string.Empty;
+                user.Password += string.Empty;
                 user.MobileNum = string.Empty;
                 return user;
             }

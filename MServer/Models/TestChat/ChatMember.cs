@@ -9,7 +9,7 @@ namespace MServer.Models.TestChat
     public class ChatMember
     {
         public int Id { get; set; }
-        public Chat Chat { get; set; }
+        public int Chat_Id { get; set; }
         public User User { get; set; }
     }
 }

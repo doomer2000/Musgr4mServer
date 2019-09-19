@@ -27,8 +27,14 @@ namespace MServer.Services
         private HttpListenerContext context;
         private HttpListenerRequest request;
         private HttpListenerResponse response;
+        //Key UserIp
+        private Dictionary<int, TcpClient> ClientsConnection = new Dictionary<int, TcpClient>();
+        //private TcpClient tcpClient;
+        //TcpListener listener = new TcpListener(IPAddress.Any, 8080);
         private readonly string ip;
         private readonly string port;
+
+
 
         public Server(string ip, string port)
         {
@@ -54,9 +60,34 @@ namespace MServer.Services
             server.Prefixes.Add($"http://{ip}:{port}/CreateChat/");
         }
 
+        public void StartServer()
+        {
+            TcpListener listener = new TcpListener(IPAddress.Any, 8080);
+            listener.Start();
+
+            Console.WriteLine("Server started...");
+            Task.Run(() =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        Console.WriteLine("Я зашёл в бесконечный цикл");
+                        var client = listener.AcceptTcpClient();
+                        ListenClient(client);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                }
+            });
+
+        }
 
         public void start()
         {
+            StartServer();
             Console.WriteLine("Ожидание подключений...");
             while (true)
             {
@@ -83,6 +114,7 @@ namespace MServer.Services
                                     Task.Run(() => TryLogin());
                                     // TryLogin();
                                     break;
+
                             }
                         }
                         else
@@ -140,31 +172,104 @@ namespace MServer.Services
         }
 
 
+        public void ListenClient(TcpClient client)
+        {
+            string userId = null;
+            bool connected = true;
+            var reader = new StreamReader(client.GetStream());
+            var writer = new StreamWriter(client.GetStream());
+            writer.AutoFlush = true;
+
+
+            while (connected)
+            {
+                var data = reader.ReadLine();
+                var command = data.Split('~')[1];
+                var message = data.Split('~')[0];
+                switch (command)
+                {
+                    case "connect":
+                        userId = message;
+                        Console.WriteLine($"{userId.ToString()} listening");
+                        Console.WriteLine($"{userId} connected!");
+                        ClientsConnection.Add(Int32.Parse(userId), client);
+                        Console.WriteLine($"{ClientsConnection.Count} users connected");
+                        break;
+                    case "message":
+                        Console.WriteLine($"{userId}: {message}");
+                        BroadcastMessage(message);
+                        break;
+                        //case "end":
+                        //    Console.WriteLine($"{username} disconnected!");
+                        //    connected = false;
+                        //    chatUsers.RemoveAll(x => x.Username == username);
+                        //    Console.WriteLine($"{chatUsers.Count} users connected");
+                        //    break;
+                }
+            }
+
+            reader.Close();
+            writer.Close();
+            client.Close();
+
+        }
+
+        public void BroadcastMessage(string messagejson)
+        {
+            bool msgCrtd = false;
+            Models.TestChat.Message message = JsonConvert.DeserializeObject<Models.TestChat.Message>(messagejson);
+            foreach (ChatMember u in message.Chat.ChatMembers)
+            {
+                if (message.User.Id != u.User.Id)
+                {
+                    if (u.User.IsOnline)
+                    {
+                        StreamWriter streamWriter = new StreamWriter(ClientsConnection[u.Id].GetStream());
+                        streamWriter.WriteLine($"{message}~new-message");
+                    }
+                    else
+                    {
+                        CommunicationService communicationService = new CommunicationService(new Wheel_Context());
+                        communicationService.WriteUnreadMessage(message);
+                        msgCrtd = true;
+                    }
+                }
+            }
+        }
+
         private void CreateChat()
         {
             using (Stream stream = request.InputStream)
             {
                 using (StreamReader reader = new StreamReader(stream))
                 {
-                    MyChat mychat = JsonConvert.DeserializeObject<MyChat>(reader.ReadToEnd());
+                  
+                    
+                        string test = reader.ReadToEnd();
+                        //JsonConverter<Chat> jsonConverter = new JsonConverter();
+                        
+                        Chat mychat = JsonConvert.DeserializeObject<Chat>(reader.ReadToEnd());
 
-                    Console.WriteLine($"{mychat.User.Login}\n" +
-                        $"{mychat.Chat.Title}\n" +
-                        $"{mychat.Chat.ChatMembers.Count}");
-
-    
+                        Console.WriteLine($"{mychat.Title}\n" +
+                            $"{mychat.IsPrivate}\n" +
+                            $"{mychat.ChatMembers.Count}");
+                        Wheel_Context wheel_Context = new Wheel_Context();
+                        ChatService chatService = new ChatService(wheel_Context);
+                        chatService.CreateChat(mychat);
+                    
                     using (Stream outstream = response.OutputStream)
                     {
-                        Bitmap bitmap = new Bitmap(@"C:\Users\qwert\Desktop\1.jpg");
-                        ImageConverter converter = new ImageConverter();
+
+                        //Bitmap bitmap = new Bitmap(@"C:\Users\qwert\Desktop\1.jpg");
+                        //ImageConverter converter = new ImageConverter();
                         //string jsonObj = JsonConvert.SerializeObject(bitmap);
-                        byte[] buffer = (byte[])converter.ConvertTo(bitmap, typeof(byte[]));
-                        response.ContentLength64 = buffer.Length;
-                        outstream.Write(buffer, 0, buffer.Length);
+                        //byte[] buffer = (byte[])converter.ConvertTo(bitmap, typeof(byte[]));
+                        //response.ContentLength64 = buffer.Length;
+                        //outstream.Write(buffer, 0, buffer.Length);
                         outstream.Close();
 
 
-                  
+
                     }
 
                     Wheel_Context dbcontext = new Wheel_Context();
@@ -173,10 +278,10 @@ namespace MServer.Services
             }
         }
 
-        private bool Numcheck(string str)
-        {
-            return int.TryParse(str, out int id);
-        }
+        //private bool Numcheck(string str)
+        //{
+        //    return int.TryParse(str, out int id);
+        //}
 
 
         private async void GetProfile(int id)
@@ -205,51 +310,61 @@ namespace MServer.Services
 
         public async void TryLogin()
         {
-            using (Stream stream = request.InputStream)
+            try
             {
-                using (StreamReader reader = new StreamReader(stream))
+                using (Stream stream = request.InputStream)
                 {
-                    string data = reader.ReadToEnd();
-                    string login = data.Split('&')[1];
-                    string password = data.Split('&')[2];
-                    string deviceIp = data.Split('&')[3];
-
-                    Wheel_Context dbcontext = new Wheel_Context();
-                    IUserService userService = new UserService(dbcontext);
-
-
-                    User exist = await userService.IsUserExist(login, password);
-                    if (exist != null)
+                    using (StreamReader reader = new StreamReader(stream))
                     {
-                        Device device = new Device() { User = exist, IpAdress = deviceIp };
+                        string data = reader.ReadToEnd();
+                        string login = data.Split('&')[1];
+                        string password = data.Split('&')[2];
+                        //string deviceIp = data.Split('&')[3];
 
-                        await userService.AddDevice(device);
-                        User user = await userService.TryLogin(login, password);
+                        Wheel_Context dbcontext = new Wheel_Context();
+                        IUserService userService = new UserService(dbcontext);
 
-                        using (Stream outstream = response.OutputStream)
+
+                        User exist = await userService.IsUserExist(login, password);
+                        if (exist != null)
                         {
-                            string jsonObj = JsonConvert.SerializeObject(user);
-                            byte[] buffer = Encoding.UTF8.GetBytes(jsonObj);
-                            response.ContentLength64 = buffer.Length;
-                            outstream.Write(buffer, 0, buffer.Length);
-                            outstream.Close();
-                        }
-                    }
-                    else
-                    {
-                        using (Stream outstream = response.OutputStream)
-                        {
-                            string jsonObj = JsonConvert.SerializeObject(null);
-                            byte[] buffer = Encoding.UTF8.GetBytes(jsonObj);
-                            response.ContentLength64 = buffer.Length;
-                            outstream.Write(buffer, 0, buffer.Length);
-                            outstream.Close();
-                        }
-                    }
+                            //Device device = new Device() { User = exist, IpAdress = deviceIp };
 
+                            //await userService.AddDevice(device);
+                            User user = await userService.TryLogin(login, password);
+                            userService.SetOnline(user.Id);
+
+                            using (Stream outstream = response.OutputStream)
+                            {
+                                string jsonObj = JsonConvert.SerializeObject(user);
+                                byte[] buffer = Encoding.UTF8.GetBytes(jsonObj);
+                                response.ContentLength64 = buffer.Length;
+                                outstream.Write(buffer, 0, buffer.Length);
+                                outstream.Close();
+                            }
+                        }
+                        else
+                        {
+                            using (Stream outstream = response.OutputStream)
+                            {
+                                string jsonObj = JsonConvert.SerializeObject(null);
+                                byte[] buffer = Encoding.UTF8.GetBytes(jsonObj);
+                                response.ContentLength64 = buffer.Length;
+                                outstream.Write(buffer, 0, buffer.Length);
+                                outstream.Close();
+                            }
+                        }
+
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+
+            }
         }
+
+
 
         public void GetPlaylist()
         {
@@ -271,6 +386,8 @@ namespace MServer.Services
                 }
             }
         }
+
+
 
 
 

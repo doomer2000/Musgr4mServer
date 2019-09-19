@@ -20,23 +20,10 @@ namespace MServer.Repositoies
             this.context = context;
         }
 
-
-        public async Task<Device> AddDevice(Device device)
-        {
-            device = context.Devices.Add(device);
-            await context.SaveChangesAsync();
-            return device;
-        }
-
-        public async void AddDeviceToUser(User user, Device device)
-        {
-            user.Devices.Add(device);
-            await context.SaveChangesAsync();
-        }
-
         public async Task<User> IsUserExist(string login, string password)
         {
-            User user = await context.Users.FirstOrDefaultAsync<User>(d => d.Login == login && d.Password == password);
+            User user = await context.Users.FirstOrDefaultAsync<User>(d => d.Login == login &&
+            d.Password == password);
             if (user != null)
             {
                 return user;
@@ -44,14 +31,19 @@ namespace MServer.Repositoies
             return null;
         }
 
+        public void SetOnline(int userId)
+        {
+            context.Users.FirstOrDefault(u => u.Id == userId).IsOnline = true;
+        }
+
         public async Task<User> TryLogin(string login, string password)
         {
-            User user = await context.Users.AsNoTracking().FirstOrDefaultAsync(d => d.Login == login && d.Password == password);
+            User user = await context.Users.AsNoTracking().FirstOrDefaultAsync(d => d.Login == login &&
+            d.Password == password);
             if (user != null)
             {
-                user.Password = string.Empty;
-                user.MobileNum = string.Empty;
                 user.UserFriends = await GetFriends(user.Id);
+                user.Password += "5843doom0";
                 return user;
             }
             return null;
